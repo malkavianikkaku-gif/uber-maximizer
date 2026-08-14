@@ -68,20 +68,37 @@ def dashboard_view(request):
     renta_diaria = Decimal('1900.00') / Decimal('6.0')
     dinero_real_bolsillo = global_neto_viajes - renta_diaria
 
-    # Calculamos el salario por hora para cada aplicación de forma segura
-    for app, data in apps_info.items():
-        data['salario_x_hora'] = data['neto'] / data['horas'] if data['horas'] > 0 else Decimal('0.0')
+    # ... (Tu código anterior de sumatoria de totales se queda igual) ...
 
-    # Convertimos datos de calles a JSON para Leaflet
+    # Deducción de Renta Diaria fija ($1,900 / 6)
+    renta_diaria = Decimal('1900.00') / Decimal('6.0')
+    dinero_real_bolsillo = global_neto_viajes - renta_diaria
+
+    # 🌟 NUEVA LÓGICA: Cálculo del porcentaje del Punto de Equilibrio
+    if global_neto_viajes > 0:
+        # Calculamos qué porcentaje de la renta ya cubrimos (Máximo 100%)
+        porcentaje_equilibrio = (global_neto_viajes / renta_diaria) * Decimal('100.0')
+        porcentaje_equilibrio = min(porcentaje_equilibrio, Decimal('100.0'))
+    else:
+        porcentaje_equilibrio = Decimal('0.0')
+
+    # Cuántos pesos faltan para llegar al punto de equilibrio neto
+    pesos_faltantes_renta = max(Decimal('0.0'), renta_diaria - global_neto_viajes)
+
+    # Convertimos los datos geográficos a JSON para Leaflet
     calles_lista = list(calles.values('colonia_o_zona', 'tipo_riesgo', 'descripcion', 'latitud', 'longitud'))
     calles_json = json.dumps(calles_lista, cls=DecimalEncoder)
 
+    # 🌟 ACTUALIZA TU CONTEXT PARA ENVIAR LAS NUEVAS METRICAS AL HTML
     context = {
         'total_bruto': global_bruto,
         'dinero_real_bolsillo': dinero_real_bolsillo,
         'renta_diaria': renta_diaria,
         'total_horas': global_horas,
-        'apps_info': apps_info,  # <-- Enviamos el desglose detallado de las aplicaciones al HTML
+        'apps_info': apps_info,
         'calles_peligrosas_json': calles_json,
+        'porcentaje_equilibrio': float(porcentaje_equilibrio), # Enviamos como float para el ancho del CSS
+        'pesos_faltantes_renta': pesos_faltantes_renta,
     }
     return render(request, 'dashboard.html', context)
+

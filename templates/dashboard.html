@@ -104,6 +104,20 @@
     <div class="container">
         <h1>🚖 Tablero de Control Ejecutivo - UberMaximizer</h1>
         
+        <!-- Título principal con botón de Cierre de Caja a la derecha -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #3182ce; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h1 style="margin: 0; border: none; padding: 0; font-size: 24px;">🚖 Tablero Ejecutivo - UberMaximizer</h1>
+            
+            <!-- Formulario del Botón Discreto de Cierre -->
+            <form method="POST" style="margin: 0; width: auto;" onsubmit="return confirmarCierre();">
+                {% csrf_token %}
+                <input type="hidden" name="tipo_formulario" value="cierre_jornada">
+                <button type="submit" style="background-color: #2d3748; color: #edf2f7; font-size: 13px; padding: 8px 14px; width: auto; border-radius: 6px;">
+                    🏁 Terminar Turno y Archivar
+                </button>
+            </form>
+        </div>
+        
         <!-- Bloque de Tarjetas -->
        <h2 style="color: #2c5282; margin-top: 10px; font-size: 18px; text-transform: uppercase;">📊 Rendimiento Neto por Aplicación</h2>
         <div class="grid-cards" style="margin-bottom: 30px;">
@@ -284,6 +298,12 @@
         map.on('focus', function() {
             map.invalidateSize();
         });
+
+                // Función de seguridad para confirmar el cierre de caja diario
+        function confirmarCierre() {
+            return confirm("¿Estás seguro de que deseas terminar tu turno actual? Esto archivará tus viajes en PostgreSQL y reiniciará tu tablero a ceros para una nueva jornada.");
+        }
+
 
     </script>
 </body>

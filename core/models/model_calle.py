@@ -14,6 +14,8 @@ class CalleRiesgo(models.Model):
     longitud = models.DecimalField(max_digits=9, decimal_places=6, default=-99.133208)
     fecha_reporte = models.DateTimeField(auto_now_add=True)
 
+    activo = models.BooleanField(default=True)
+
     class Meta:
         db_table = 'core_calleriesgo'
 

@@ -20,6 +20,8 @@ class RegistroFinanciero(models.Model):
     
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
+    activo = models.BooleanField(default=True)
+
     class Meta:
         # Esto le dice a Django que mantenga el nombre interno original de la tabla en la base de datos
         db_table = 'core_registrofinanciero'

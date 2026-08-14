@@ -11,10 +11,10 @@ class DecimalEncoder(json.JSONEncoder):
         return super().default(obj)
 
 def dashboard_view(request):
-    # --- PROCESAR ENVÍO DE FORMULARIOS ---
+
     if request.method == "POST":
         tipo_formulario = request.POST.get("tipo_formulario")
-        
+
         if tipo_formulario == "financiero":
             RegistroFinanciero.objects.create(
                 plataforma=request.POST.get("plataforma"),
@@ -33,33 +33,55 @@ def dashboard_view(request):
             )
         return redirect("dashboard")
 
-    # --- CONSULTAR Y CALCULAR MÉTRICAS ---
+    # --- NUEVA LÓGICA DE FINANZAS MULTI-APP ---
     registros = RegistroFinanciero.objects.all()
     calles = CalleRiesgo.objects.all()
 
-    total_bruto = Decimal('0.0')
-    total_neto_viajes = Decimal('0.0')
-    total_horas = Decimal('0.0')
+    # Inicializamos las métricas globales del bolsillo
+    global_bruto = Decimal('0.0')
+    global_neto_viajes = Decimal('0.0')
+    global_horas = Decimal('0.0')
+
+    # Diccionario para separar métricas por cada aplicación
+    apps_info = {
+        'Uber': {'bruto': Decimal('0.0'), 'neto': Decimal('0.0'), 'horas': Decimal('0.0'), 'viajes': 0},
+        'Didi': {'bruto': Decimal('0.0'), 'neto': Decimal('0.0'), 'horas': Decimal('0.0'), 'viajes': 0},
+        'InDrive': {'bruto': Decimal('0.0'), 'neto': Decimal('0.0'), 'horas': Decimal('0.0'), 'viajes': 0},
+    }
 
     for reg in registros:
-        total_bruto += reg.monto_bruto
-        total_neto_viajes += reg.ganancia_neta_viaje
-        if reg.tipo_registro == 'viaje':
-            total_horas += Decimal(reg.tiempo_minutos) / Decimal('60.0')
+        app = reg.plataforma
+        if app in apps_info:
+            apps_info[app]['bruto'] += reg.monto_bruto
+            apps_info[app]['neto'] += reg.ganancia_neta_viaje
+            
+            global_bruto += reg.monto_bruto
+            global_neto_viajes += reg.ganancia_neta_viaje
+
+            if reg.tipo_registro == 'viaje':
+                horas_viaje = Decimal(reg.tiempo_minutos) / Decimal('60.0')
+                apps_info[app]['horas'] += horas_viaje
+                apps_info[app]['viajes'] += 1
+                global_horas += horas_viaje
 
     # Deducción de Renta Diaria fija ($1,900 / 6)
     renta_diaria = Decimal('1900.00') / Decimal('6.0')
-    dinero_real_bolsillo = total_neto_viajes - renta_diaria
+    dinero_real_bolsillo = global_neto_viajes - renta_diaria
 
-    # Convertimos los datos geográficos a JSON para Leaflet
+    # Calculamos el salario por hora para cada aplicación de forma segura
+    for app, data in apps_info.items():
+        data['salario_x_hora'] = data['neto'] / data['horas'] if data['horas'] > 0 else Decimal('0.0')
+
+    # Convertimos datos de calles a JSON para Leaflet
     calles_lista = list(calles.values('colonia_o_zona', 'tipo_riesgo', 'descripcion', 'latitud', 'longitud'))
     calles_json = json.dumps(calles_lista, cls=DecimalEncoder)
 
     context = {
-        'total_bruto': total_bruto,
+        'total_bruto': global_bruto,
         'dinero_real_bolsillo': dinero_real_bolsillo,
         'renta_diaria': renta_diaria,
-        'total_horas': total_horas,
+        'total_horas': global_horas,
+        'apps_info': apps_info,  # <-- Enviamos el desglose detallado de las aplicaciones al HTML
         'calles_peligrosas_json': calles_json,
     }
     return render(request, 'dashboard.html', context)

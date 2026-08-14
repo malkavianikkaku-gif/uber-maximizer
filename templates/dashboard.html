@@ -54,27 +54,43 @@
         .btn-calle { background-color: #dd6b20; }
         .btn-calle:hover { background-color: #c05621; }
         .calle-item { padding: 15px; border-bottom: 1px solid #edf2f7; background-color: #fffaf0; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #dd6b20; }
-        button, .btn-calle { 
+        button { 
             width: 100%;
-            padding: 14px 10px;/* Un pocomas alto para tocar fácilmente en celular*/
+            padding: 14px 10px; /* Un poco más alto para tocar fácilmente en celular */
             font-size: 16px; /* Texto más grande para mejor legibilidad en celular */
             cursor: pointer;
-            transition: background-color 0.2s ease;        
+            transition: background-color 0.2s ease;
+        }
+        .btn-calle {
+            width: 100%;
+            padding: 14px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
         }
         button:active, .btn-calle:active {
             transform: scale(0.98); /* Efecto de pulsación al tocar */
         }
         @media (max-width: 600px) {
-            .grid-cards { grid-template-columns: 1fr 1fr; /* 2columnas en celular*/
-            gap: 10px;
+            .grid-cards { 
+                grid-template-columns: 1fr 1fr; /* 2 columnas en celular */
+                gap: 10px;
             }
-            .card { padding: 12px; /* Más compacto en celular*/ 
+            .card { 
+                padding: 12px; /* Más compacto en celular */
             }
-            .card h3 { font-size: 11px; /*Título legible en celular*/ 
+            .card h3 { 
+                font-size: 11px; /* Título legible en celular */
             }
-            .card p { font-size: 18px; /*Texto más pequeño en celular*/ 
+            .card p { 
+                font-size: 18px; /* Texto más pequeño en celular */
             }
         }
+                /* Colores de bordes dinámicos por aplicación */
+        .card.app-uber { border-left-color: #000000 !important; }    /* Negro Uber */
+        .card.app-didi { border-left-color: #ff8c00 !important; }    /* Naranja Didi */
+        .card.app-indrive { border-left-color: #00cc66 !important; } /* Verde InDrive */
+
     </style>
 </head>
 <body>
@@ -82,23 +98,20 @@
         <h1>🚖 Tablero de Control Ejecutivo - UberMaximizer</h1>
         
         <!-- Bloque de Tarjetas -->
-        <div class="grid-cards">
-            <div class="card info">
-                <h3>Ingreso Bruto Apps</h3>
-                <p>${{ total_bruto|floatformat:2 }} MXN</p>
-            </div>
-            <div class="card danger">
-                <h3>Cuota Renta Diaria</h3>
-                <p>${{ renta_diaria|floatformat:2 }} MXN</p>
-            </div>
-            <div class="card success">
-                <h3>Dinero Real en Bolsillo</h3>
-                <p>${{ dinero_real_bolsillo|floatformat:2 }} MXN</p>
-            </div>
-            <div class="card info">
-                <h3>Tiempo Conducido</h3>
-                <p>{{ total_horas|floatformat:2 }} Horas</p>
-            </div>
+       <h2 style="color: #2c5282; margin-top: 10px; font-size: 18px; text-transform: uppercase;">📊 Rendimiento Neto por Aplicación</h2>
+        <div class="grid-cards" style="margin-bottom: 30px;">
+            {% for app_name, data in apps_info.items %}
+                <!-- Usamos el nombre de la app directamente como clase CSS (baja el nombre a minúsculas) -->
+                <div class="card app-{{ app_name|lower }}">
+                    <h3 style="color: #2d3748; font-weight: bold; font-size: 16px;">{{ app_name }}</h3>
+                    <div style="font-size: 13px; color: #4a5568; margin-top: 5px; line-height: 1.6;">
+                        • Viajes activos: <strong>{{ data.viajes }}</strong><br>
+                        • Ingreso Bruto: <strong>${{ data.bruto|floatformat:2 }}</strong><br>
+                        • Ganancia Neta: <strong style="color: #2f855a;">${{ data.neto|floatformat:2 }}</strong><br>
+                        • Salario Real: <strong style="color: #2b6cb0;">${{ data.salario_x_hora|floatformat:2 }} MXN/hr</strong>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
 
         <div class="section-split">

@@ -17,9 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from core.views.view_dashboard import dashboard_view  # <-- Importamos tu nueva vista del tablero
+from core.views.view_historial import historial_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', dashboard_view, name='dashboard'),  # <-- Ruta raíz (página principal limpia)
+    path('', dashboard_view, name='dashboard'),
+    path('historial/', historial_view, name='historial'),
 ]
 

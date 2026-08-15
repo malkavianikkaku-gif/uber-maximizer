@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Jornadas - UberMaximizer</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; }
+        .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4a5568; padding-bottom: 10px; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
+        h1 { margin: 0; font-size: 24px; color: #1a202c; }
+        .btn-nav { background-color: #3182ce; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 14px; cursor: pointer; transition: background 0.2s; text-align: center; }
+        .btn-nav:hover { background-color: #2b6cb0; }
+        .jornada-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #4a5568; }
+        .jornada-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; margin-bottom: 12px; }
+        .grid-detalles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .detalle-item { font-size: 14px; color: #4a5568; }
+        .detalle-item strong { color: #1a202c; }
+        .badge-neto { font-size: 16px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
+        .badge-neto.positivo { background-color: #c6f6d5; color: #22543d; }
+        .badge-neto.negativo { background-color: #fed7d7; color: #742a2a; }
+        .apps-tag-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
+        .app-tag { font-size: 12px; padding: 3px 8px; border-radius: 4px; background-color: #edf2f7; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado con navegación -->
+        <div class="header-box">
+            <h1>🗄️ Historial Global de Turnos Archivados</h1>
+            <a href="{% url 'dashboard' %}" class="btn-nav">⬅️ Volver al Tablero Principal</a>
+        </div>
+
+        <!-- Listado de Jornadas Pasadas -->
+        {% for jornada in historial_jornadas %}
+            <div class="jornada-card">
+                <div class="jornada-header">
+                    <span>📅 Fecha: {{ jornada.fecha }}</span>
+                    <!-- Condicional para pintar el balance real en verde o rojo -->
+                    <span class="badge-neto {% if jornada.neto_bolsillo >= 0 %}positivo{% else %}negativo{% endif %}">
+                        Balance Neto: ${{ jornada.neto_bolsillo|floatformat:2 }} MXN
+                    </span>
+                </div>
+                
+                <div class="grid-detalles">
+                    <div class="detalle-item">• Ingreso Bruto Apps: <strong>${{ jornada.bruto|floatformat:2 }}</strong></div>
+                    <div class="detalle-item">• Renta Diaria Deducida: <strong>-${{ renta_diaria|floatformat:2 }}</strong></div>
+                    <div class="detalle-item">• Total de Viajes: <strong>{{ jornada.viajes_count }}</strong></div>
+                    <div class="detalle-item">• Horas Conducidas: <strong>{{ jornada.horas|floatformat:2 }} hrs</strong></div>
+                </div>
+
+                <!-- Desglose de qué aplicaciones operaste ese día -->
+                <div class="apps-tag-container">
+                    <span style="font-size: 12px; color: #718096; align-self: center;">Plataformas usadas:</span>
+                    {% for app, info in jornada.apps.items %}
+                        <span class="app-tag">
+                            <strong>{{ app }}</strong> ({{ info.viajes }} viajes | Bruto: ${{ info.bruto|floatformat:1 }})
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <div style="text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #718096;">
+                <p style="font-size: 18px; margin: 0;">📭 No tienes turnos archivados en el historial todavía.</p>
+                <p style="font-size: 14px; margin-top: 5px;">Cuando finalices tu primer turno usando el botón "Terminar Turno y Archivar", los reportes consolidados aparecerán en esta sección.</p>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

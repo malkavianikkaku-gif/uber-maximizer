@@ -23,6 +23,8 @@ def dashboard_view(request):
         
         if tipo_formulario == "financiero":
             # 🌟 MODIFICACIÓN: Guardamos vinculando el viaje al usuario actual
+            tiempo_recibido = request.POST.get("tiempo_minutos", "0")
+            tiempo_minutos_limpio = int(Decimal(tiempo_recibido)) if '.' in tiempo_recibido else int(tiempo_recibido)
             RegistroFinanciero.objects.create(
                 usuario=request.user,
                 plataforma=request.POST.get("plataforma"),

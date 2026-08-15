@@ -19,11 +19,14 @@ from django.urls import path
 from core.views.view_dashboard import dashboard_view  # <-- Importamos tu nueva vista del tablero
 from core.views.view_historial import historial_view
 from core.views.view_registro import registro_view  # <-- Importamos tu nueva vista de registro
+from core.views.view_auth import login_view, logout_view  # <-- Importamos tu nueva vista de autenticación
     
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', dashboard_view, name='dashboard'),
     path('historial/', historial_view, name='historial'),
     path('registro/', registro_view, name='registro'),
+    path('login/', login_view, name='login'),  # <-- Agregamos la ruta para la vista de login
+    path('logout/', logout_view, name='logout'),  # <-- Agregamos la
 ]
 

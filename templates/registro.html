@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - UberMaximizer</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1a202c; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 450px; }
+        h2 { margin-top: 0; color: #2d3748; text-align: center; border-bottom: 2px solid #3182ce; padding-bottom: 10px; }
+        label { font-weight: 600; color: #4a5568; font-size: 14px; display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background-color: #3182ce; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button:hover { background-color: #2b6cb0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>🚀 Crear Cuenta Conductor</h2>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Datos de Acceso -->
+            <label>Nombre de Usuario (Para iniciar sesión):</label>
+            <input type="text" name="username" placeholder="Ej. fabian123" required>
+            
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+
+            <!-- Datos Operativos del Auto -->
+            <label>Modelo del Vehículo:</label>
+            <input type="text" name="modelo_carro" value="Chevrolet Spark 2016" required>
+
+            <div class="grid-2">
+                <div>
+                    <label>Rendimiento (km/l):</label>
+                    <input type="number" step="0.1" name="rendimiento" value="14.0" required>
+                </div>
+                <div>
+                    <label>Costo Magna ($/l):</label>
+                    <input type="number" step="0.01" name="costo_gasolina" value="24.50" required>
+                </div>
+            </div>
+
+            <label>Cuota de Renta Semanal ($):</label>
+            <input type="number" step="0.01" name="renta_semanal" value="1900.00" required>
+
+            <button type="submit">Iniciar en UberMaximizer</button>
+        </form>
+    </div>
+</body>
+</html>

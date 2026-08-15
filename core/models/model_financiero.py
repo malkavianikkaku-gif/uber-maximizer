@@ -1,7 +1,11 @@
 from django.db import models
 from decimal import Decimal
+from django.contrib.auth.models import User
 
 class RegistroFinanciero(models.Model):
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='registros', null=True, blank=True)
+
     OPCIONES_TIPO = [
         ('viaje', 'Viaje Regular'),
         ('bono', 'Bono o Incentivo'),

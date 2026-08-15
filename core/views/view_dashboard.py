@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from ..models.model_financiero import RegistroFinanciero
 from ..models.model_calle import CalleRiesgo
 from decimal import Decimal
@@ -10,14 +11,20 @@ class DecimalEncoder(json.JSONEncoder):
             return float(obj)
         return super().default(obj)
 
+# 🌟 AGREGAMOS ESTE DECORADOR: Protege la pantalla para que solo entren usuarios firmados
+@login_required(login_url='registro')
 def dashboard_view(request):
-
+    # 1. Recuperamos el perfil dinámico del conductor que inició sesión
+    perfil = request.user.perfil
+    
+    # --- PROCESAR ENVÍO DE FORMULARIOS ---
     if request.method == "POST":
         tipo_formulario = request.POST.get("tipo_formulario")
         
         if tipo_formulario == "financiero":
-            # ... (Tu código de guardado financiero se queda igual) ...
+            # 🌟 MODIFICACIÓN: Guardamos vinculando el viaje al usuario actual
             RegistroFinanciero.objects.create(
+                usuario=request.user,
                 plataforma=request.POST.get("plataforma"),
                 tipo_registro=request.POST.get("tipo_registro"),
                 distancia_km=Decimal(request.POST.get("distancia_km", "0")),
@@ -25,30 +32,29 @@ def dashboard_view(request):
                 monto_bruto=Decimal(request.POST.get("monto_bruto"))
             )
         elif tipo_formulario == "calle":
-            # ... (Tu código de guardado de calles se queda igual) ...
+            # 🌟 MODIFICACIÓN: Guardamos vinculando la calle al usuario actual
             CalleRiesgo.objects.create(
+                usuario=request.user,
                 colonia_o_zona=request.POST.get("colonia_o_zona"),
                 tipo_riesgo=request.POST.get("tipo_riesgo"),
                 descripcion=request.POST.get("descripcion"),
                 latitud=Decimal(request.POST.get("latitud")),
                 longitud=Decimal(request.POST.get("longitud"))
             )
-            
-        # 🌟 NUEVA ACCIÓN: ARCHIVAR JORNADA TOTAL
+
         elif tipo_formulario == "cierre_jornada":
-            # Cambiamos masivamente el estatus a False en PostgreSQL
-            RegistroFinanciero.objects.filter(activo=True).update(activo=False)
-            CalleRiesgo.objects.filter(activo=True).update(activo=False)
+            # 🌟 MODIFICACIÓN: Solo archivamos los viajes del usuario actual
+            RegistroFinanciero.objects.filter(usuario=request.user, activo=True).update(activo=False)
+            CalleRiesgo.objects.filter(usuario=request.user, activo=True).update(activo=False)
             return redirect("dashboard")
             
         return redirect("dashboard")
 
-    # 🌟 CORRECCIÓN: Filtramos las consultas para que SOLO traigan lo activo hoy
-    registros = RegistroFinanciero.objects.filter(activo=True)
-    calles = CalleRiesgo.objects.filter(activo=True)
+    # --- CONSULTAR Y CALCULAR MÉTRICAS DINÁMICAS ---
+    # 🌟 FILTRAMOS LAS CONSULTAS: Solo traemos los datos de este conductor específico
+    registros = RegistroFinanciero.objects.filter(usuario=request.user, activo=True)
+    calles = CalleRiesgo.objects.filter(usuario=request.user, activo=True)
 
-    # ... (Todo tu bloque intermedio de cálculos financieros con 'global_neto_viajes',
-    # 'apps_info' y serialización JSON se queda exactamente igual) ...
     global_bruto = Decimal('0.0')
     global_neto_viajes = Decimal('0.0')
     global_horas = Decimal('0.0')
@@ -74,14 +80,9 @@ def dashboard_view(request):
                 apps_info[app]['horas'] += horas_viaje
                 apps_info[app]['viajes'] += 1
                 global_horas += horas_viaje
-       # Deducción de Renta Diaria fija ($1,900 / 6)
-    renta_diaria = Decimal('1900.00') / Decimal('6.0')
-    dinero_real_bolsillo = global_neto_viajes - renta_diaria
 
-    # ... (Tu código anterior de sumatoria de totales se queda igual) ...
-
-    # Deducción de Renta Diaria fija ($1,900 / 6)
-    renta_diaria = Decimal('1900.00') / Decimal('6.0')
+    # 🌟 CÁLCULO TOTALMENTE DINÁMICO: Consumimos la renta semanal del perfil del usuario
+    renta_diaria = perfil.renta_semanal / Decimal('6.0')
     dinero_real_bolsillo = global_neto_viajes - renta_diaria
 
 
@@ -90,6 +91,7 @@ def dashboard_view(request):
         porcentaje_equilibrio = (global_neto_viajes / renta_diaria) * Decimal('100.0')
         porcentaje_equilibrio = min(porcentaje_equilibrio, Decimal('100.0'))
     else:
+
         porcentaje_equilibrio = Decimal('0.0')
 
 
@@ -111,6 +113,8 @@ def dashboard_view(request):
         'calles_peligrosas_json': calles_json,
         'porcentaje_equilibrio': float(porcentaje_equilibrio),
         'pesos_faltantes_renta': pesos_faltantes_renta,
+        'modelo_carro': perfil.modelo_carro, # Pasamos el auto para mostrarlo en el título
     }
+
     return render(request, 'dashboard.html', context)
 

@@ -1,6 +1,10 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class CalleRiesgo(models.Model):
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='calles', null=True, blank=True)
+
     OPCIONES_RIESGO = [
         ('inclinacion', 'Inclinación Extrema'),
         ('terraceria', 'Terracería / Baches'),

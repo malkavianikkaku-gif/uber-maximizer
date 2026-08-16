@@ -11,6 +11,9 @@
         @import "tailwindcss";
     </style>
 
+        <!-- 🌟 CDN OFICIAL DE VUE.JS 3 (REACTIVIDAD EN VIVO) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
     <!-- CSS de Leaflet para el mapa (se queda igual) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <!-- Importación de Chart.js (se queda igual) -->
@@ -107,11 +110,13 @@
         <!-- 📝 SECCIÓN DIVIDIDA: FORMULARIOS DE CAPTURA -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- FORMULARIO VIAJE -->
-            <div class="bg-slate-800 p-5 rounded-xl shadow-md">
+            <div id="app-financiera" class="bg-slate-800 p-5 rounded-xl shadow-md">
                 <h2 class="text-base font-bold text-blue-400 border-b border-slate-700 pb-2 mb-4">💰 Registrar Viaje o Bono</h2>
+                
                 <form method="POST" class="space-y-3">
                     {% csrf_token %}
                     <input type="hidden" name="tipo_formulario" value="financiero">
+                    
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Plataforma:</label>
                         <select name="plataforma" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
@@ -122,25 +127,37 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Tipo de Registro:</label>
-                        <select name="tipo_registro" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+
+                        <select name="tipo_registro" v-model="tipo_registro" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                             <option value="viaje">Viaje Regular</option>
                             <option value="bono">Bono o Incentivo</option>
                         </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <!-- reactividad vue: si es un bono se ocultan los km y los minutos-->
+                    <div class="grid grid-cols-2 gap-2" v-if="tipo_registro === 'viaje'">
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 mb-1">Distancia (Km):</label>
-                            <input type="number" step="0.01" name="distancia_km" value="0.00" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <input type="number" step="0.01" name="distancia_km" v-model="distancia" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 mb-1">Tiempo (Minutos):</label>
-                            <input type="number" name="tiempo_minutos" value="0" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <input type="number" name="tiempo_minutos" v-model="tiempo" value="0" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Monto en Pantalla ($):</label>
-                        <input type="number" step="0.01" name="monto_bruto" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                        <input type="number" step="0.01" name="monto_bruto" v-model="monto_bruto" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                     </div>
+                    <div class="bg-slate-950/50 p-3 rounded-lg border border-slate-700/50 text-xs space-y-1 text-slate-400" v-if="monto_bruto"> 
+                        <p class="font-semibold text-slate-300">Previsualización de Deducciones(Spark):</p>
+                        <p v-if="tipo_registro === 'viaje'">• Gasto estimado Gasolina: <span class="text-rose-400 font-medium">${ gastoGasolina.toFixed(2) } MXN</span></p>
+                        <p v-if="tipo_registro === 'viaje'">• Desgaste del coche: <span class="text-amber-500 font-medium">${ gastoDesgaste.toFixed(2) } MXN</span></p>
+                        <p>• Impuesto SAT estimado: <span class="text-slate-300">${ impuestoSat.toFixed(2) } MXN</span></p>
+                        <p class="pt-1 border-t border-slate-800 text-white font-bold text-sm">
+                            💵 Ganancia Neta Estimada: <span class="text-emerald-400">${ gananciaNeta.toFixed(2) } MXN</span>
+                        </p>  
+                    </div>
+
                     <button class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-md">
                         Guardar Registro Financiero
                     </button>
@@ -316,6 +333,46 @@
                 });
             }
         });
+    </script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            
+            delimiters: ['${', '}'],
+            
+            
+            data() {
+                return {
+                    tipo_registro: 'viaje',
+                    distancia: 0,
+                    tiempo: 0,
+                    monto_bruto: 0
+                }
+            },
+            
+            
+            computed: {
+                gastoGasolina() {
+                    if (this.tipo_registro !== 'viaje') return 0;
+                    const costoLitro = 24.50;
+                    const rendimiento = 14.0;
+                    return this.distancia * (costoLitro / rendimiento);
+                },
+                gastoDesgaste() {
+                    if (this.tipo_registro !== 'viaje') return 0;
+                    const costoPorKm = 0.40;
+                    return this.distancia * costoPorKm;
+                },
+                impuestoSat() {
+                    const tasa = this.tipo_registro === 'viaje' ? 0.031 : 0.021;
+                    return this.monto_bruto * tasa;
+                },
+                gananciaNeta() {
+                    return this.monto_bruto - this.gastoGasolina - this.gastoDesgaste - this.impuestoSat;
+                }
+            }
+        }).mount('#app-financiera'); // 💡 Montamos Vue exclusivamente dentro del contenedor azul
     </script>
 </body>
 </html>

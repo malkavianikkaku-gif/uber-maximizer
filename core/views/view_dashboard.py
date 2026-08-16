@@ -25,6 +25,7 @@ def dashboard_view(request):
             # 🌟 MODIFICACIÓN: Guardamos vinculando el viaje al usuario actual
             tiempo_recibido = request.POST.get("tiempo_minutos", "0")
             tiempo_minutos_limpio = int(Decimal(tiempo_recibido)) if '.' in tiempo_recibido else int(tiempo_recibido)
+
             RegistroFinanciero.objects.create(
                 usuario=request.user,
                 plataforma=request.POST.get("plataforma"),
@@ -105,6 +106,13 @@ def dashboard_view(request):
     calles_lista = list(calles.values('colonia_o_zona', 'tipo_riesgo', 'descripcion', 'latitud', 'longitud'))
     calles_json = json.dumps(calles_lista, cls=DecimalEncoder)
 
+    apps_nombres = ['Uber', 'Didi', 'InDrive']
+
+
+    apps_salarios_hora = [
+        float(apps_info.get(app, {}).get('salario_x_hora', Decimal('0.0')) or 0.0) for app in apps_nombres
+    ]
+
 
     context = {
         'total_bruto': global_bruto,
@@ -116,6 +124,8 @@ def dashboard_view(request):
         'porcentaje_equilibrio': float(porcentaje_equilibrio),
         'pesos_faltantes_renta': pesos_faltantes_renta,
         'modelo_carro': perfil.modelo_carro, # Pasamos el auto para mostrarlo en el título
+        'apps_nombres_json': json.dumps(apps_nombres),
+        'apps_salarios_hora_json': json.dumps(apps_salarios_hora)
     }
 
     return render(request, 'dashboard.html', context)

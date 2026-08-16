@@ -7,6 +7,7 @@
     <!-- CSS de Leaflet para diseño del mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         /* 1. Regla especial para que el mapa no se rompa */
         .leaflet-pane img {
@@ -250,8 +251,8 @@
 
         <!-- 🌟 NUEVO: MÓDULO DE ANALÍTICAS GRÁFICAS INTERACTIVAS -->
         <div class="list-box" style="margin-top: 30px; margin-bottom: 30px;">
-            <h2>📈 Gráfica de Rendimiento Financiero por Aplicación</h2>
-            <p style="color: #4a5568; margin-bottom: 15px;">Comparativa en vivo entre lo que te pagan en pantalla (Bruto) y lo que realmente te queda en la bolsa (Neto):</p>
+            <h2>📈 Gráfica de Eficiencia Financiera (Salario por Hora)</h2>
+            <p style="color: #4a5568; margin-bottom: 15px;">Comparativa visual del dinero neto real que dejas en tu bolsillo por cada hora conducida en cada aplicación:</p>
             <div style="position: relative; width: 100%; max-height: 350px;">
                 <!-- Lienzo donde Chart.js dibujará las barras de Uber, Didi e InDrive -->
                 <canvas id="graficaFinanciera"></canvas>
@@ -329,12 +330,10 @@
                 // 🌟 PROGRAMACIÓN DE LAS GRÁFICAS EN VIVO CON CHART.JS 🌟
         
         // 1. Recuperamos las listas de datos estructuradas desde el backend de Django
-        // 🌟 REEMPLAZO TEMPORAL DE PRUEBA: Ponemos números reales directamente en JS
-        // 🌟 RECONEXIÓN DINÁMICA: Volvemos a enlazar el backend de Django
+        // y las convertimos a JSON válido para JavaScript.
         var nombresApps = JSON.parse('{{ apps_nombres_json|safe|default:"[]" }}');
-        var datosBrutos = JSON.parse('{{ apps_brutos_json|safe|default:"[]" }}');
-        var datosNetos = JSON.parse('{{ apps_netos_json|safe|default:"[]" }}');
-
+        var datosSalarios = JSON.parse('{{ apps_salarios_hora_json|safe|default:"[]" }}');
+        
 
 
         // 2. Buscamos el lienzo HTML y configuramos las barras de Chart.js
@@ -345,32 +344,28 @@
                 labels: nombresApps, //Eje X: ['Uber', 'Didi', 'InDrive']
                 datasets: [
                     {
-                        label: '💰 Ingreso Bruto ($)',
-                        data: datosBrutos,
-                        backgroundColor: 'rgba(49, 130, 206, 0.7)', // Azul translúcido
-                        borderColor: '#3182ce',
+                        label: '💰 Salario por Hora ($)',
+                        data: datosSalarios,
+                        backgroundColor: [
+                            'rgba(0, 0, 0, 0.7)', // Negro translúcido
+                            'rgba(255, 140, 0, 0.7)', // Naranja translúcido
+                            'rgba(0, 204, 102, 0.7)' // Verde translúcido
+                        ],
+                        borderColor: [
+                            '#3182ce',
+                            '#ff8c00',
+                            '#00cc66'
+                        ],
                         borderWidth: 2,
                         borderRadius: 6
                     },
-                    {
-                        label: '🟢 Ganancia Neta Real ($)',
-                        data: datosNetos,
-                        backgroundColor: 'rgba(56, 161, 105, 0.7)', // Verde translúcido
-                        borderColor: '#38a169',
-                        borderWidth: 2,
-                        borderRadius: 6
-                    }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'top',
-
-                    },
-                    
+                    legend: {position: 'top',},
                 },
                 scales: {
                     y: {

@@ -7,11 +7,8 @@
     
     <!-- 🌟 CDN OFICIAL DE TAILWIND CSS  -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style type="text/tailwindcss">
-        @import "tailwindcss";
-    </style>
 
-        <!-- 🌟 CDN OFICIAL DE VUE.JS 3 (REACTIVIDAD EN VIVO) -->
+    <!-- 🌟 CDN OFICIAL DE VUE.JS 3 (REACTIVIDAD EN VIVO) -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
     <!-- CSS de Leaflet para el mapa (se queda igual) -->
@@ -52,6 +49,21 @@
                     </button>
                 </form>
             </div>
+        </div>
+
+        <div class="bg-slate-800 p-2 rounded-xl flex items-center gap-1 mb-6 shadow-md border border-slate-700/50 max-w-md">
+            <!-- Botón Hoy -->
+            <a href="?filtro=hoy" class="flex-1 text-center font-bold text-xs md:text-sm py-2 rounded-lg transition active:scale-95 {% if filtro_activo == 'hoy' %}bg-blue-600 text-white shadow-md{% else %}text-slate-400 hover:bg-slate-700/50 hover:text-slate-200{% endif %}">
+                ⏱️ Turno de Hoy
+            </a>
+            <!-- Botón Semana -->
+            <a href="?filtro=semana" class="flex-1 text-center font-bold text-xs md:text-sm py-2 rounded-lg transition active:scale-95 {% if filtro_activo == 'semana' %}bg-blue-600 text-white shadow-md{% else %}text-slate-400 hover:bg-slate-700/50 hover:text-slate-200{% endif %}">
+                📅 Esta Semana
+            </a>
+            <!-- Botón Mes -->
+            <a href="?filtro=mes" class="flex-1 text-center font-bold text-xs md:text-sm py-2 rounded-lg transition active:scale-95 {% if filtro_activo == 'mes' %}bg-blue-600 text-white shadow-md{% else %}text-slate-400 hover:bg-slate-700/50 hover:text-slate-200{% endif %}">
+                📆 Último Mes
+            </a>
         </div>
 
         <!-- 📊 METRICAS GLOBALES -->

@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from ..models.model_financiero import RegistroFinanciero
 from ..models.model_calle import CalleRiesgo
 from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
 import json
 
 class DecimalEncoder(json.JSONEncoder):
@@ -55,8 +57,22 @@ def dashboard_view(request):
 
     # --- CONSULTAR Y CALCULAR MÉTRICAS DINÁMICAS ---
     # 🌟 FILTRAMOS LAS CONSULTAS: Solo traemos los datos de este conductor específico
+    filtro_tiempo = request.GET.get('filtro','hoy')  # Por defecto, mostrar solo los registros de hoy
     registros = RegistroFinanciero.objects.filter(usuario=request.user, activo=True)
     calles = CalleRiesgo.objects.filter(usuario=request.user, activo=True)
+    ahora = timezone.now()
+
+    if filtro_tiempo == 'hoy':
+        registros = registros.filter(activo=True)
+        calles = calles.filter(activo=True)
+    elif filtro_tiempo == 'semana':
+        hace_una_semana = ahora - timedelta(days=7)  # Lunes de esta semana
+        registros = registros.filter(fecha_registro__gte=hace_una_semana)
+        calles = calles.filter(fecha_reporte__gte=hace_una_semana)
+    elif filtro_tiempo == 'mes':
+        hace_un_mes = ahora - timedelta(days=30)  # Aproximadamente un mes atrás
+        registros = registros.filter(fecha_registro__gte=hace_un_mes)
+        calles = calles.filter(fecha_reporte__gte=hace_un_mes)
 
     global_bruto = Decimal('0.0')
     global_neto_viajes = Decimal('0.0')
@@ -85,23 +101,34 @@ def dashboard_view(request):
                 global_horas += horas_viaje
 
     # 🌟 CÁLCULO TOTALMENTE DINÁMICO: Consumimos la renta semanal del perfil del usuario
-    renta_diaria = perfil.renta_semanal / Decimal('6.0')
-    dinero_real_bolsillo = global_neto_viajes - renta_diaria
+    if filtro_tiempo == 'hoy':
+        renta_calculada = perfil.renta_semanal / Decimal('6.0')  # Renta diaria
+    elif filtro_tiempo == 'semana':
+        renta_calculada = perfil.renta_semanal  # Renta semanal
+    elif filtro_tiempo == 'mes':
+        renta_calculada = perfil.renta_semanal * Decimal('4.0')  # Renta mensual
+
+    dinero_real_bolsillo = global_neto_viajes - renta_calculada
 
 
     if global_neto_viajes > 0:
 
-        porcentaje_equilibrio = (global_neto_viajes / renta_diaria) * Decimal('100.0')
+        porcentaje_equilibrio = (global_neto_viajes / renta_calculada) * Decimal('100.0')
         porcentaje_equilibrio = min(porcentaje_equilibrio, Decimal('100.0'))
     else:
 
         porcentaje_equilibrio = Decimal('0.0')
 
 
-    pesos_faltantes_renta = max(Decimal('0.0'), renta_diaria - global_neto_viajes)
+    pesos_faltantes_renta = max(Decimal('0.0'), renta_calculada - global_neto_viajes)
 
     for app, data in apps_info.items():
         data['salario_x_hora'] = data['neto'] / data['horas'] if data['horas'] > 0 else Decimal('0.0')
+
+    apps_brutos = [float(apps_info['Uber']['bruto']), float(apps_info['Didi']['bruto']), float(apps_info['InDrive']['bruto'])]
+    apps_netos = [float(apps_info['Uber']['neto']), float(apps_info['Didi']['neto']), float(apps_info['InDrive']['neto'])]
+    apps_salarios_hora = [float(apps_info['Uber']['salario_x_hora']), float(apps_info['Didi']['salario_x_hora']), float(apps_info['InDrive']['salario_x_hora'])]
+    apps_nombres = ['Uber', 'Didi', 'InDrive']
 
     calles_lista = list(calles.values('colonia_o_zona', 'tipo_riesgo', 'descripcion', 'latitud', 'longitud'))
     calles_json = json.dumps(calles_lista, cls=DecimalEncoder)
@@ -117,7 +144,7 @@ def dashboard_view(request):
     context = {
         'total_bruto': global_bruto,
         'dinero_real_bolsillo': dinero_real_bolsillo,
-        'renta_diaria': renta_diaria,
+        'renta_calculada': renta_calculada,
         'total_horas': global_horas,
         'apps_info': apps_info,
         'calles_peligrosas_json': calles_json,
